@@ -7,6 +7,7 @@ import TributeSearch from "./TributeSearch";
 class Tribute {
   constructor({
     values = null,
+    valuesCollection = null,
     iframe = null,
     selectClass = "highlight",
     containerClass = "tribute-container",
@@ -31,6 +32,7 @@ class Tribute {
   }) {
     this.autocompleteMode = autocompleteMode;
     this.menuSelected = 0;
+    this.menuTabSelected = 0;
     this.current = {};
     this.inputEvent = false;
     this.isActive = false;
@@ -46,7 +48,9 @@ class Tribute {
       allowSpaces = false;
     }
 
-    if (values) {
+    console.log("start", values)
+
+    if (valuesCollection) {
       this.collection = [
         {
           // symbol that starts the lookup
@@ -86,7 +90,7 @@ class Tribute {
 
             return (
               noMatchTemplate ||
-              function() {
+              function () {
                 return "<li>No Match Found!</li>";
               }.bind(this)
             );
@@ -100,6 +104,8 @@ class Tribute {
 
           // array of objects or a function returning an array of objects
           values: values,
+
+          valuesCollection: valuesCollection,
 
           requireLeadingSpace: requireLeadingSpace,
 
@@ -140,7 +146,7 @@ class Tribute {
 
             return (
               noMatchTemplate ||
-              function() {
+              function () {
                 return "<li>No Match Found!</li>";
               }.bind(this)
             );
@@ -148,6 +154,7 @@ class Tribute {
           lookup: item.lookup || lookup,
           fillAttr: item.fillAttr || fillAttr,
           values: item.values,
+          valuesCollection: item.valuesCollection,
           requireLeadingSpace: item.requireLeadingSpace,
           searchOpts: item.searchOpts || searchOpts,
           menuItemLimit: item.menuItemLimit || menuItemLimit,
@@ -255,11 +262,32 @@ class Tribute {
     }
   }
 
-  createMenu(containerClass) {
-    let wrapper = this.range.getDocument().createElement("div"),
-      ul = this.range.getDocument().createElement("ul");
-    wrapper.className = containerClass;
-    wrapper.appendChild(ul);
+  createMenu(containerClass, items, menuTabSelected ) {
+    let wrapper = this.range.getDocument().createElement("div")
+    let tabs = this.range.getDocument().createElement("div")
+
+    wrapper.setAttribute('data-active-tab', menuTabSelected)
+    let counter = 0;
+    for (const item in items) {
+      let  ul = this.range.getDocument().createElement("ul");
+      let button = this.range.getDocument().createElement("button")
+      button.setAttribute('data-tab-toggle', counter)
+      button.innerHTML = item
+
+      button.addEventListener('click', () => {
+        wrapper.setAttribute('data-active-tab', button.getAttribute('data-tab-toggle'))
+      })
+
+      tabs.appendChild(button)
+
+      ul.setAttribute('data-tab-wrapper', item)
+      ul.setAttribute('data-tab-index', counter)
+      counter++;
+      wrapper.className = containerClass;
+      wrapper.appendChild(ul);
+    }
+
+    wrapper.prepend(tabs);
 
     if (this.menuContainer) {
       return this.menuContainer.appendChild(wrapper);
@@ -269,6 +297,9 @@ class Tribute {
   }
 
   showMenuFor(element, scrollTo) {
+
+    // console.log('some menu', this.current.collection.valuesCollection)
+
     // Only proceed if menu isn't already shown for the current element & mentionText
     if (
       this.isActive &&
@@ -279,15 +310,18 @@ class Tribute {
     }
     this.currentMentionTextSnapshot = this.current.mentionText;
 
+    this.menuTabSelected = 0;
     // create the menu if it doesn't exist.
     if (!this.menu) {
-      this.menu = this.createMenu(this.current.collection.containerClass);
+      this.menu = this.createMenu(this.current.collection.containerClass, this.current.collection.valuesCollection, this.menuTabSelected);
       element.tributeMenu = this.menu;
       this.menuEvents.bind(this.menu);
     }
 
     this.isActive = true;
     this.menuSelected = 0;
+
+
 
     if (!this.current.mentionText) {
       this.current.mentionText = "";
@@ -298,6 +332,7 @@ class Tribute {
       if (!this.isActive) {
         return;
       }
+
 
       let items = this.search.filter(this.current.mentionText, values, {
         pre: this.current.collection.searchOpts.pre || "<span>",
@@ -316,62 +351,75 @@ class Tribute {
         }
       });
 
-      if (this.current.collection.menuItemLimit) {
-        items = items.slice(0, this.current.collection.menuItemLimit);
-      }
 
-      this.current.filteredItems = items;
 
-      let ul = this.menu.querySelector("ul");
+      for (const item in items) {
+        let ul = this.menu.querySelector(`ul[data-tab-wrapper=${item}]`);
 
-      this.range.positionMenuAtCaret(scrollTo);
-
-      if (!items.length) {
-        let noMatchEvent = new CustomEvent("tribute-no-match", {
-          detail: this.menu
-        });
-        this.current.element.dispatchEvent(noMatchEvent);
-        if (
-          (typeof this.current.collection.noMatchTemplate === "function" &&
-            !this.current.collection.noMatchTemplate()) ||
-          !this.current.collection.noMatchTemplate
-        ) {
-          this.hideMenu();
-        } else {
-          typeof this.current.collection.noMatchTemplate === "function"
-            ? (ul.innerHTML = this.current.collection.noMatchTemplate())
-            : (ul.innerHTML = this.current.collection.noMatchTemplate);
+        if (this.current.collection.menuItemLimit) {
+          items[item] = items[item].slice(0, this.current.collection.menuItemLimit);
         }
 
-        return;
-      }
 
-      ul.innerHTML = "";
-      let fragment = this.range.getDocument().createDocumentFragment();
+        this.range.positionMenuAtCaret(scrollTo);
 
-      items.forEach((item, index) => {
-        let li = this.range.getDocument().createElement("li");
-        li.setAttribute("data-index", index);
-        li.className = this.current.collection.itemClass;
-        li.addEventListener("mousemove", e => {
-          let [li, index] = this._findLiTarget(e.target);
-          if (e.movementY !== 0) {
-            this.events.setActiveLi(index);
+        if (!items[item].length) {
+          let noMatchEvent = new CustomEvent("tribute-no-match", {
+            detail: this.menu
+          });
+          this.current.element.dispatchEvent(noMatchEvent);
+          if (
+            (typeof this.current.collection.noMatchTemplate === "function" &&
+              !this.current.collection.noMatchTemplate()) ||
+            !this.current.collection.noMatchTemplate
+          ) {
+            this.hideMenu();
+          } else {
+            typeof this.current.collection.noMatchTemplate === "function"
+              ? (ul.innerHTML = this.current.collection.noMatchTemplate())
+              : (ul.innerHTML = this.current.collection.noMatchTemplate);
           }
-        });
-        if (this.menuSelected === index) {
-          li.classList.add(this.current.collection.selectClass);
+
+          return;
+
         }
-        li.innerHTML = this.current.collection.menuItemTemplate(item);
-        fragment.appendChild(li);
-      });
-      ul.appendChild(fragment);
+
+        this.current.filteredItems = items;
+
+        ul.innerHTML = "";
+        let fragment = this.range.getDocument().createDocumentFragment();
+
+        items[item].forEach((it, index) => {
+          let li = this.range.getDocument().createElement("li");
+          li.setAttribute("data-index", index);
+          li.setAttribute("data-tab", item);
+          li.className = this.current.collection.itemClass;
+          li.addEventListener("mousemove", e => {
+            let [li, index] = this._findLiTarget(e.target);
+            if (e.movementY !== 0) {
+              this.events.setActiveLi(index);
+            }
+          });
+          if (this.menuSelected === index) {
+            li.classList.add(this.current.collection.selectClass);
+
+          }
+          li.innerHTML = this.current.collection.menuItemTemplate(it);
+          fragment.appendChild(li);
+        });
+
+        console.log(fragment)
+
+        ul.appendChild(fragment);
+      }
+
+
     };
 
     if (typeof this.current.collection.values === "function") {
-      this.current.collection.values(this.current.mentionText, processValues);
+      this.current.collection.valuesCollection(this.current.mentionText, processValues);
     } else {
-      processValues(this.current.collection.values);
+      processValues(this.current.collection.valuesCollection);
     }
   }
 
@@ -455,14 +503,16 @@ class Tribute {
       this.menu.style.cssText = "display: none;";
       this.isActive = false;
       this.menuSelected = 0;
+      this.menuTabSelected = 0;
       this.current = {};
     }
   }
 
-  selectItemAtIndex(index, originalEvent) {
+  selectItemAtIndex(index, tab, originalEvent) {
+    console.log('selectItemAtIndex', index, originalEvent)
     index = parseInt(index);
     if (typeof index !== "number" || isNaN(index)) return;
-    let item = this.current.filteredItems[index];
+    let item = this.current.filteredItems[tab][index];
     let content = this.current.collection.selectTemplate(item);
     if (content !== null) this.replaceText(content, originalEvent, item);
   }

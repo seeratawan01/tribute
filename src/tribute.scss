@@ -10,6 +10,7 @@
   z-index: 999999;
 
   ul {
+    display: none;
     margin: 0;
     margin-top: 2px;
     padding: 0;
@@ -36,5 +37,17 @@
 
   .menu-highlighted {
     font-weight: bold;
+  }
+
+  @for $i from 0 through 5 {
+    &[data-active-tab="#{$i}"] {
+      ul[data-tab-index="#{$i}"] {
+        display: block;
+      }
+
+      button[data-tab-toggle="#{$i}"] {
+        background: gray;
+      }
+    }
   }
 }

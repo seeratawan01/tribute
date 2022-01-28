@@ -28,7 +28,7 @@ class TributeSearch {
             ch, compareChar
 
         if (opts.skip) {
-            return {rendered: string, score: 0}
+            return { rendered: string, score: 0 }
         }
 
         pattern = opts.caseSensitive && pattern || pattern.toLowerCase()
@@ -116,37 +116,45 @@ class TributeSearch {
 
     filter(pattern, arr, opts) {
         opts = opts || {}
-        return arr
-            .reduce((prev, element, idx, arr) => {
-                let str = element
 
-                if (opts.extract) {
-                    str = opts.extract(element)
+        let result = {}
 
-                    if (!str) { // take care of undefineds / nulls / etc.
-                        str = ''
+        for (const ar in arr) {
+
+            result[ar] = arr[ar]
+                .reduce((prev, element, idx, arr) => {
+                    let str = element
+
+                    if (opts.extract) {
+                        str = opts.extract(element)
+
+                        if (!str) { // take care of undefineds / nulls / etc.
+                            str = ''
+                        }
                     }
-                }
 
-                let rendered = this.match(pattern, str, opts)
+                    let rendered = this.match(pattern, str, opts)
 
-                if (rendered != null) {
-                    prev[prev.length] = {
-                        string: rendered.rendered,
-                        score: rendered.score,
-                        index: idx,
-                        original: element
+                    if (rendered != null) {
+                        prev[prev.length] = {
+                            string: rendered.rendered,
+                            score: rendered.score,
+                            index: idx,
+                            original: element
+                        }
                     }
-                }
 
-                return prev
-            }, [])
+                    return prev
+                }, [])
 
-        .sort((a, b) => {
-            let compare = b.score - a.score
-            if (compare) return compare
-            return a.index - b.index
-        })
+                .sort((a, b) => {
+                    let compare = b.score - a.score
+                    if (compare) return compare
+                    return a.index - b.index
+                })
+        }
+
+        return result
     }
 }
 

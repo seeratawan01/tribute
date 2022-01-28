@@ -88,10 +88,10 @@ class TributeEvents {
       while (li.nodeName.toLowerCase() !== "li") {
         li = li.parentNode;
         if (!li || li === tribute.menu) {
-          throw new Error("cannot find the <li> container for the click");
+          return
         }
       }
-      tribute.selectItemAtIndex(li.getAttribute("data-index"), event);
+      tribute.selectItemAtIndex(li.getAttribute("data-index"), li.getAttribute("data-tab"), event);
       tribute.hideMenu();
 
       // TODO: should fire with externalTrigger and target is outside of menu
@@ -102,6 +102,7 @@ class TributeEvents {
   }
 
   keyup(instance, event) {
+
     if (instance.inputEvent) {
       instance.inputEvent = false;
     }
@@ -223,14 +224,16 @@ class TributeEvents {
       },
       enter: (e, el) => {
         // choose selection
-        if (this.tribute.isActive && this.tribute.current.filteredItems) {
-          e.preventDefault();
-          e.stopPropagation();
-          setTimeout(() => {
-            this.tribute.selectItemAtIndex(this.tribute.menuSelected, e);
-            this.tribute.hideMenu();
-          }, 0);
-        }
+
+        // TODO: To Add Keys Functionality
+        // if (this.tribute.isActive && this.tribute.current.filteredItems) {
+        //   e.preventDefault();
+        //   e.stopPropagation();
+        //   setTimeout(() => {
+        //     this.tribute.selectItemAtIndex(this.tribute.menuSelected, e);
+        //     this.tribute.hideMenu();
+        //   }, 0);
+        // }
       },
       escape: (e, el) => {
         if (this.tribute.isActive) {
@@ -258,40 +261,44 @@ class TributeEvents {
         }
       },
       up: (e, el) => {
+        // console.log("up", e, el)
+// TODO: To Add Keys Functionality
         // navigate up ul
-        if (this.tribute.isActive && this.tribute.current.filteredItems) {
-          e.preventDefault();
-          e.stopPropagation();
-          let count = this.tribute.current.filteredItems.length,
-            selected = this.tribute.menuSelected;
-
-          if (count > selected && selected > 0) {
-            this.tribute.menuSelected--;
-            this.setActiveLi();
-          } else if (selected === 0) {
-            this.tribute.menuSelected = count - 1;
-            this.setActiveLi();
-            this.tribute.menu.scrollTop = this.tribute.menu.scrollHeight;
-          }
-        }
+        // if (this.tribute.isActive && this.tribute.current.filteredItems) {
+        //   e.preventDefault();
+        //   e.stopPropagation();
+        //   let count = this.tribute.current.filteredItems.length,
+        //     selected = this.tribute.menuSelected;
+        //
+        //   if (count > selected && selected > 0) {
+        //     this.tribute.menuSelected--;
+        //     this.setActiveLi();
+        //   } else if (selected === 0) {
+        //     this.tribute.menuSelected = count - 1;
+        //     this.setActiveLi();
+        //     this.tribute.menu.scrollTop = this.tribute.menu.scrollHeight;
+        //   }
+        // }
       },
       down: (e, el) => {
-        // navigate down ul
-        if (this.tribute.isActive && this.tribute.current.filteredItems) {
-          e.preventDefault();
-          e.stopPropagation();
-          let count = this.tribute.current.filteredItems.length - 1,
-            selected = this.tribute.menuSelected;
-
-          if (count > selected) {
-            this.tribute.menuSelected++;
-            this.setActiveLi();
-          } else if (count === selected) {
-            this.tribute.menuSelected = 0;
-            this.setActiveLi();
-            this.tribute.menu.scrollTop = 0;
-          }
-        }
+//         console.log("down")
+ // TODO: To Add Keys Functionality
+//         // navigate down ul
+//         if (this.tribute.isActive && this.tribute.current.filteredItems) {
+//           e.preventDefault();
+//           e.stopPropagation();
+//           let count = this.tribute.current.filteredItems.length - 1,
+//             selected = this.tribute.menuSelected;
+//
+//           if (count > selected) {
+//             this.tribute.menuSelected++;
+//             this.setActiveLi();
+//           } else if (count === selected) {
+//             this.tribute.menuSelected = 0;
+//             this.setActiveLi();
+//             this.tribute.menu.scrollTop = 0;
+//           }
+//         }
       },
       delete: (e, el) => {
         if (

@@ -10,6 +10,7 @@
   z-index: 999999;
 }
 .tribute-container ul {
+  display: none;
   margin: 0;
   margin-top: 2px;
   padding: 0;
@@ -31,4 +32,40 @@
 }
 .tribute-container .menu-highlighted {
   font-weight: bold;
+}
+.tribute-container[data-active-tab="0"] ul[data-tab-index="0"] {
+  display: block;
+}
+.tribute-container[data-active-tab="0"] button[data-tab-toggle="0"] {
+  background: gray;
+}
+.tribute-container[data-active-tab="1"] ul[data-tab-index="1"] {
+  display: block;
+}
+.tribute-container[data-active-tab="1"] button[data-tab-toggle="1"] {
+  background: gray;
+}
+.tribute-container[data-active-tab="2"] ul[data-tab-index="2"] {
+  display: block;
+}
+.tribute-container[data-active-tab="2"] button[data-tab-toggle="2"] {
+  background: gray;
+}
+.tribute-container[data-active-tab="3"] ul[data-tab-index="3"] {
+  display: block;
+}
+.tribute-container[data-active-tab="3"] button[data-tab-toggle="3"] {
+  background: gray;
+}
+.tribute-container[data-active-tab="4"] ul[data-tab-index="4"] {
+  display: block;
+}
+.tribute-container[data-active-tab="4"] button[data-tab-toggle="4"] {
+  background: gray;
+}
+.tribute-container[data-active-tab="5"] ul[data-tab-index="5"] {
+  display: block;
+}
+.tribute-container[data-active-tab="5"] button[data-tab-toggle="5"] {
+  background: gray;
 }

@@ -130,10 +130,10 @@ class TributeEvents {
       while (li.nodeName.toLowerCase() !== "li") {
         li = li.parentNode;
         if (!li || li === tribute.menu) {
-          throw new Error("cannot find the <li> container for the click");
+          return
         }
       }
-      tribute.selectItemAtIndex(li.getAttribute("data-index"), event);
+      tribute.selectItemAtIndex(li.getAttribute("data-index"), li.getAttribute("data-tab"), event);
       tribute.hideMenu();
 
       // TODO: should fire with externalTrigger and target is outside of menu
@@ -144,6 +144,7 @@ class TributeEvents {
   }
 
   keyup(instance, event) {
+
     if (instance.inputEvent) {
       instance.inputEvent = false;
     }
@@ -264,14 +265,16 @@ class TributeEvents {
       },
       enter: (e, el) => {
         // choose selection
-        if (this.tribute.isActive && this.tribute.current.filteredItems) {
-          e.preventDefault();
-          e.stopPropagation();
-          setTimeout(() => {
-            this.tribute.selectItemAtIndex(this.tribute.menuSelected, e);
-            this.tribute.hideMenu();
-          }, 0);
-        }
+
+        // TODO: To Add Keys Functionality
+        // if (this.tribute.isActive && this.tribute.current.filteredItems) {
+        //   e.preventDefault();
+        //   e.stopPropagation();
+        //   setTimeout(() => {
+        //     this.tribute.selectItemAtIndex(this.tribute.menuSelected, e);
+        //     this.tribute.hideMenu();
+        //   }, 0);
+        // }
       },
       escape: (e, el) => {
         if (this.tribute.isActive) {
@@ -299,40 +302,44 @@ class TributeEvents {
         }
       },
       up: (e, el) => {
+        // console.log("up", e, el)
+// TODO: To Add Keys Functionality
         // navigate up ul
-        if (this.tribute.isActive && this.tribute.current.filteredItems) {
-          e.preventDefault();
-          e.stopPropagation();
-          let count = this.tribute.current.filteredItems.length,
-            selected = this.tribute.menuSelected;
-
-          if (count > selected && selected > 0) {
-            this.tribute.menuSelected--;
-            this.setActiveLi();
-          } else if (selected === 0) {
-            this.tribute.menuSelected = count - 1;
-            this.setActiveLi();
-            this.tribute.menu.scrollTop = this.tribute.menu.scrollHeight;
-          }
-        }
+        // if (this.tribute.isActive && this.tribute.current.filteredItems) {
+        //   e.preventDefault();
+        //   e.stopPropagation();
+        //   let count = this.tribute.current.filteredItems.length,
+        //     selected = this.tribute.menuSelected;
+        //
+        //   if (count > selected && selected > 0) {
+        //     this.tribute.menuSelected--;
+        //     this.setActiveLi();
+        //   } else if (selected === 0) {
+        //     this.tribute.menuSelected = count - 1;
+        //     this.setActiveLi();
+        //     this.tribute.menu.scrollTop = this.tribute.menu.scrollHeight;
+        //   }
+        // }
       },
       down: (e, el) => {
-        // navigate down ul
-        if (this.tribute.isActive && this.tribute.current.filteredItems) {
-          e.preventDefault();
-          e.stopPropagation();
-          let count = this.tribute.current.filteredItems.length - 1,
-            selected = this.tribute.menuSelected;
-
-          if (count > selected) {
-            this.tribute.menuSelected++;
-            this.setActiveLi();
-          } else if (count === selected) {
-            this.tribute.menuSelected = 0;
-            this.setActiveLi();
-            this.tribute.menu.scrollTop = 0;
-          }
-        }
+//         console.log("down")
+ // TODO: To Add Keys Functionality
+//         // navigate down ul
+//         if (this.tribute.isActive && this.tribute.current.filteredItems) {
+//           e.preventDefault();
+//           e.stopPropagation();
+//           let count = this.tribute.current.filteredItems.length - 1,
+//             selected = this.tribute.menuSelected;
+//
+//           if (count > selected) {
+//             this.tribute.menuSelected++;
+//             this.setActiveLi();
+//           } else if (count === selected) {
+//             this.tribute.menuSelected = 0;
+//             this.setActiveLi();
+//             this.tribute.menu.scrollTop = 0;
+//           }
+//         }
       },
       delete: (e, el) => {
         if (
@@ -1161,7 +1168,7 @@ class TributeSearch {
             compareString = opts.caseSensitive && string || string.toLowerCase();
 
         if (opts.skip) {
-            return {rendered: string, score: 0}
+            return { rendered: string, score: 0 }
         }
 
         pattern = opts.caseSensitive && pattern || pattern.toLowerCase();
@@ -1249,43 +1256,52 @@ class TributeSearch {
 
     filter(pattern, arr, opts) {
         opts = opts || {};
-        return arr
-            .reduce((prev, element, idx, arr) => {
-                let str = element;
 
-                if (opts.extract) {
-                    str = opts.extract(element);
+        let result = {};
 
-                    if (!str) { // take care of undefineds / nulls / etc.
-                        str = '';
+        for (const ar in arr) {
+
+            result[ar] = arr[ar]
+                .reduce((prev, element, idx, arr) => {
+                    let str = element;
+
+                    if (opts.extract) {
+                        str = opts.extract(element);
+
+                        if (!str) { // take care of undefineds / nulls / etc.
+                            str = '';
+                        }
                     }
-                }
 
-                let rendered = this.match(pattern, str, opts);
+                    let rendered = this.match(pattern, str, opts);
 
-                if (rendered != null) {
-                    prev[prev.length] = {
-                        string: rendered.rendered,
-                        score: rendered.score,
-                        index: idx,
-                        original: element
-                    };
-                }
+                    if (rendered != null) {
+                        prev[prev.length] = {
+                            string: rendered.rendered,
+                            score: rendered.score,
+                            index: idx,
+                            original: element
+                        };
+                    }
 
-                return prev
-            }, [])
+                    return prev
+                }, [])
 
-        .sort((a, b) => {
-            let compare = b.score - a.score;
-            if (compare) return compare
-            return a.index - b.index
-        })
+                .sort((a, b) => {
+                    let compare = b.score - a.score;
+                    if (compare) return compare
+                    return a.index - b.index
+                });
+        }
+
+        return result
     }
 }
 
 class Tribute {
   constructor({
     values = null,
+    valuesCollection = null,
     iframe = null,
     selectClass = "highlight",
     containerClass = "tribute-container",
@@ -1310,6 +1326,7 @@ class Tribute {
   }) {
     this.autocompleteMode = autocompleteMode;
     this.menuSelected = 0;
+    this.menuTabSelected = 0;
     this.current = {};
     this.inputEvent = false;
     this.isActive = false;
@@ -1325,7 +1342,9 @@ class Tribute {
       allowSpaces = false;
     }
 
-    if (values) {
+    console.log("start", values);
+
+    if (valuesCollection) {
       this.collection = [
         {
           // symbol that starts the lookup
@@ -1365,7 +1384,7 @@ class Tribute {
 
             return (
               noMatchTemplate ||
-              function() {
+              function () {
                 return "<li>No Match Found!</li>";
               }.bind(this)
             );
@@ -1379,6 +1398,8 @@ class Tribute {
 
           // array of objects or a function returning an array of objects
           values: values,
+
+          valuesCollection: valuesCollection,
 
           requireLeadingSpace: requireLeadingSpace,
 
@@ -1419,7 +1440,7 @@ class Tribute {
 
             return (
               noMatchTemplate ||
-              function() {
+              function () {
                 return "<li>No Match Found!</li>";
               }.bind(this)
             );
@@ -1427,6 +1448,7 @@ class Tribute {
           lookup: item.lookup || lookup,
           fillAttr: item.fillAttr || fillAttr,
           values: item.values,
+          valuesCollection: item.valuesCollection,
           requireLeadingSpace: item.requireLeadingSpace,
           searchOpts: item.searchOpts || searchOpts,
           menuItemLimit: item.menuItemLimit || menuItemLimit,
@@ -1534,11 +1556,32 @@ class Tribute {
     }
   }
 
-  createMenu(containerClass) {
-    let wrapper = this.range.getDocument().createElement("div"),
-      ul = this.range.getDocument().createElement("ul");
-    wrapper.className = containerClass;
-    wrapper.appendChild(ul);
+  createMenu(containerClass, items, menuTabSelected ) {
+    let wrapper = this.range.getDocument().createElement("div");
+    let tabs = this.range.getDocument().createElement("div");
+
+    wrapper.setAttribute('data-active-tab', menuTabSelected);
+    let counter = 0;
+    for (const item in items) {
+      let  ul = this.range.getDocument().createElement("ul");
+      let button = this.range.getDocument().createElement("button");
+      button.setAttribute('data-tab-toggle', counter);
+      button.innerHTML = item;
+
+      button.addEventListener('click', () => {
+        wrapper.setAttribute('data-active-tab', button.getAttribute('data-tab-toggle'));
+      });
+
+      tabs.appendChild(button);
+
+      ul.setAttribute('data-tab-wrapper', item);
+      ul.setAttribute('data-tab-index', counter);
+      counter++;
+      wrapper.className = containerClass;
+      wrapper.appendChild(ul);
+    }
+
+    wrapper.prepend(tabs);
 
     if (this.menuContainer) {
       return this.menuContainer.appendChild(wrapper);
@@ -1548,6 +1591,9 @@ class Tribute {
   }
 
   showMenuFor(element, scrollTo) {
+
+    // console.log('some menu', this.current.collection.valuesCollection)
+
     // Only proceed if menu isn't already shown for the current element & mentionText
     if (
       this.isActive &&
@@ -1558,15 +1604,18 @@ class Tribute {
     }
     this.currentMentionTextSnapshot = this.current.mentionText;
 
+    this.menuTabSelected = 0;
     // create the menu if it doesn't exist.
     if (!this.menu) {
-      this.menu = this.createMenu(this.current.collection.containerClass);
+      this.menu = this.createMenu(this.current.collection.containerClass, this.current.collection.valuesCollection, this.menuTabSelected);
       element.tributeMenu = this.menu;
       this.menuEvents.bind(this.menu);
     }
 
     this.isActive = true;
     this.menuSelected = 0;
+
+
 
     if (!this.current.mentionText) {
       this.current.mentionText = "";
@@ -1577,6 +1626,7 @@ class Tribute {
       if (!this.isActive) {
         return;
       }
+
 
       let items = this.search.filter(this.current.mentionText, values, {
         pre: this.current.collection.searchOpts.pre || "<span>",
@@ -1595,62 +1645,75 @@ class Tribute {
         }
       });
 
-      if (this.current.collection.menuItemLimit) {
-        items = items.slice(0, this.current.collection.menuItemLimit);
-      }
 
-      this.current.filteredItems = items;
 
-      let ul = this.menu.querySelector("ul");
+      for (const item in items) {
+        let ul = this.menu.querySelector(`ul[data-tab-wrapper=${item}]`);
 
-      this.range.positionMenuAtCaret(scrollTo);
-
-      if (!items.length) {
-        let noMatchEvent = new CustomEvent("tribute-no-match", {
-          detail: this.menu
-        });
-        this.current.element.dispatchEvent(noMatchEvent);
-        if (
-          (typeof this.current.collection.noMatchTemplate === "function" &&
-            !this.current.collection.noMatchTemplate()) ||
-          !this.current.collection.noMatchTemplate
-        ) {
-          this.hideMenu();
-        } else {
-          typeof this.current.collection.noMatchTemplate === "function"
-            ? (ul.innerHTML = this.current.collection.noMatchTemplate())
-            : (ul.innerHTML = this.current.collection.noMatchTemplate);
+        if (this.current.collection.menuItemLimit) {
+          items[item] = items[item].slice(0, this.current.collection.menuItemLimit);
         }
 
-        return;
-      }
 
-      ul.innerHTML = "";
-      let fragment = this.range.getDocument().createDocumentFragment();
+        this.range.positionMenuAtCaret(scrollTo);
 
-      items.forEach((item, index) => {
-        let li = this.range.getDocument().createElement("li");
-        li.setAttribute("data-index", index);
-        li.className = this.current.collection.itemClass;
-        li.addEventListener("mousemove", e => {
-          let [li, index] = this._findLiTarget(e.target);
-          if (e.movementY !== 0) {
-            this.events.setActiveLi(index);
+        if (!items[item].length) {
+          let noMatchEvent = new CustomEvent("tribute-no-match", {
+            detail: this.menu
+          });
+          this.current.element.dispatchEvent(noMatchEvent);
+          if (
+            (typeof this.current.collection.noMatchTemplate === "function" &&
+              !this.current.collection.noMatchTemplate()) ||
+            !this.current.collection.noMatchTemplate
+          ) {
+            this.hideMenu();
+          } else {
+            typeof this.current.collection.noMatchTemplate === "function"
+              ? (ul.innerHTML = this.current.collection.noMatchTemplate())
+              : (ul.innerHTML = this.current.collection.noMatchTemplate);
           }
-        });
-        if (this.menuSelected === index) {
-          li.classList.add(this.current.collection.selectClass);
+
+          return;
+
         }
-        li.innerHTML = this.current.collection.menuItemTemplate(item);
-        fragment.appendChild(li);
-      });
-      ul.appendChild(fragment);
+
+        this.current.filteredItems = items;
+
+        ul.innerHTML = "";
+        let fragment = this.range.getDocument().createDocumentFragment();
+
+        items[item].forEach((it, index) => {
+          let li = this.range.getDocument().createElement("li");
+          li.setAttribute("data-index", index);
+          li.setAttribute("data-tab", item);
+          li.className = this.current.collection.itemClass;
+          li.addEventListener("mousemove", e => {
+            let [li, index] = this._findLiTarget(e.target);
+            if (e.movementY !== 0) {
+              this.events.setActiveLi(index);
+            }
+          });
+          if (this.menuSelected === index) {
+            li.classList.add(this.current.collection.selectClass);
+
+          }
+          li.innerHTML = this.current.collection.menuItemTemplate(it);
+          fragment.appendChild(li);
+        });
+
+        console.log(fragment);
+
+        ul.appendChild(fragment);
+      }
+
+
     };
 
     if (typeof this.current.collection.values === "function") {
-      this.current.collection.values(this.current.mentionText, processValues);
+      this.current.collection.valuesCollection(this.current.mentionText, processValues);
     } else {
-      processValues(this.current.collection.values);
+      processValues(this.current.collection.valuesCollection);
     }
   }
 
@@ -1734,14 +1797,16 @@ class Tribute {
       this.menu.style.cssText = "display: none;";
       this.isActive = false;
       this.menuSelected = 0;
+      this.menuTabSelected = 0;
       this.current = {};
     }
   }
 
-  selectItemAtIndex(index, originalEvent) {
+  selectItemAtIndex(index, tab, originalEvent) {
+    console.log('selectItemAtIndex', index, originalEvent);
     index = parseInt(index);
     if (typeof index !== "number" || isNaN(index)) return;
-    let item = this.current.filteredItems[index];
+    let item = this.current.filteredItems[tab][index];
     let content = this.current.collection.selectTemplate(item);
     if (content !== null) this.replaceText(content, originalEvent, item);
   }
